@@ -33,11 +33,9 @@ app.use(helmet({
   },
 }));
 
-// ============================================
-// CORS pour l'hébergement
-// ============================================
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:4200';
 app.use(cors({
-    origin: ['http://localhost:4200', 'https://onama-flow-frontend.onrender.com'],
+    origin: [corsOrigin, 'https://kaleidoscopic-genie-d85682.netlify.app', 'https://onama-flow-frontend.netlify.app'],
     credentials: true
 }));
 
