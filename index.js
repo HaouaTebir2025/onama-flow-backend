@@ -201,25 +201,32 @@ async function sendRejetDRH(etudiant, numeroDossier, motif) {
     return await sendEmail(etudiant.email, 'Décision finale - Candidature ONAMA', html);
 }
 
-// ============================================
-// CONNEXION BASE DE DONNÉES (SQLite ou PostgreSQL)
-// ============================================
-
 const usePostgres = process.env.USE_POSTGRES === 'true';
 
 let sequelize;
 
 if (usePostgres) {
-    sequelize = new Sequelize({
-        dialect: 'postgres',
-        database: process.env.DB_NAME || 'onama_flow',
-        username: process.env.DB_USER || 'onama_user',
-        password: process.env.DB_PASSWORD || 'onama_pass',
-        host: process.env.DB_HOST || 'localhost',
-        port: process.env.DB_PORT || 5432,
-        logging: false
-    });
-    console.log('🔵 Utilisation de PostgreSQL');
+    // Utiliser DATABASE_URL si disponible (Railway)
+    const databaseUrl = process.env.DATABASE_URL;
+    
+    if (databaseUrl) {
+        sequelize = new Sequelize(databaseUrl, {
+            dialect: 'postgres',
+            logging: false
+        });
+        console.log('🔵 Utilisation de PostgreSQL (via DATABASE_URL)');
+    } else {
+        sequelize = new Sequelize({
+            dialect: 'postgres',
+            database: process.env.DB_NAME || 'onama_flow',
+            username: process.env.DB_USER || 'onama_user',
+            password: process.env.DB_PASSWORD || 'onama_pass',
+            host: process.env.DB_HOST || 'localhost',
+            port: process.env.DB_PORT || 5432,
+            logging: false
+        });
+        console.log('🔵 Utilisation de PostgreSQL (via variables individuelles)');
+    }
 } else {
     sequelize = new Sequelize({ 
         dialect: 'sqlite', 
@@ -228,7 +235,6 @@ if (usePostgres) {
     });
     console.log('🟢 Utilisation de SQLite');
 }
-
 // ============================================
 // CONFIGURATION MULTER POUR UPLOAD CANDIDATURE
 // ============================================
