@@ -33,9 +33,12 @@ app.use(helmet({
   },
 }));
 
+// ============================================
+// CORS - Support pour Netlify et Render
+// ============================================
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:4200';
 app.use(cors({
-    origin: [corsOrigin, 'https://kaleidoscopic-genie-d85682.netlify.app', 'https://onama-flow-frontend.netlify.app'],
+    origin: [corsOrigin, 'https://kaleidoscopic-genie-d85682.netlify.app', 'https://onama-flow-frontend.netlify.app', 'https://onama-flow-frontend.onrender.com'],
     credentials: true
 }));
 
@@ -201,12 +204,15 @@ async function sendRejetDRH(etudiant, numeroDossier, motif) {
     return await sendEmail(etudiant.email, 'Décision finale - Candidature ONAMA', html);
 }
 
+// ============================================
+// CONNEXION BASE DE DONNÉES (CORRIGÉE)
+// ============================================
 const usePostgres = process.env.USE_POSTGRES === 'true';
 
 let sequelize;
 
 if (usePostgres) {
-    // Utiliser DATABASE_URL si disponible (Railway)
+    // Utiliser DATABASE_URL (Railway) ou variables individuelles
     const databaseUrl = process.env.DATABASE_URL;
     
     if (databaseUrl) {
@@ -218,11 +224,11 @@ if (usePostgres) {
     } else {
         sequelize = new Sequelize({
             dialect: 'postgres',
-            database: process.env.DB_NAME || 'onama_flow',
-            username: process.env.DB_USER || 'onama_user',
-            password: process.env.DB_PASSWORD || 'onama_pass',
-            host: process.env.DB_HOST || 'localhost',
-            port: process.env.DB_PORT || 5432,
+            database: process.env.PGDATABASE || process.env.DB_NAME || 'onama_flow',
+            username: process.env.PGUSER || process.env.DB_USER || 'postgres',
+            password: process.env.PGPASSWORD || process.env.DB_PASSWORD || '',
+            host: process.env.PGHOST || process.env.DB_HOST || 'localhost',
+            port: parseInt(process.env.PGPORT || process.env.DB_PORT || '5432'),
             logging: false
         });
         console.log('🔵 Utilisation de PostgreSQL (via variables individuelles)');
@@ -235,6 +241,7 @@ if (usePostgres) {
     });
     console.log('🟢 Utilisation de SQLite');
 }
+
 // ============================================
 // CONFIGURATION MULTER POUR UPLOAD CANDIDATURE
 // ============================================
@@ -1475,7 +1482,7 @@ const server = http.createServer(app);
 const socketIo = require('socket.io');
 const io = socketIo(server, {
     cors: {
-        origin: ['http://localhost:4200', 'https://onama-flow-frontend.onrender.com'],
+        origin: ['http://localhost:4200', 'https://onama-flow-frontend.netlify.app', 'https://kaleidoscopic-genie-d85682.netlify.app', 'https://onama-flow-frontend.onrender.com'],
         methods: ["GET", "POST"],
         credentials: true
     }
